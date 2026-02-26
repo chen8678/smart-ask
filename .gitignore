@@ -10,6 +10,9 @@ backend/.env.*
 # Node modules
 frontend/node_modules/
 
+# 大视频不纳入仓库（可放 CDN 或 Release）
+frontend/src/video/*.mp4
+
 # Logs
 logs/
 *.log
