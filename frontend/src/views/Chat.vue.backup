@@ -1,0 +1,741 @@
+<template>
+  <div class="chat-container">
+    <!-- 顶部导航 -->
+    <el-header class="chat-header">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="header-title">
+            <h2>AI智能问答</h2>
+            <p>基于知识库的智能对话助手</p>
+          </div>
+        </div>
+        <div class="header-controls">
+          <div class="control-group">
+            <label>知识库</label>
+            <el-select
+              v-model="selectedKnowledgeBase"
+              placeholder="选择知识库"
+              class="control-select"
+              @change="onKnowledgeBaseChange"
+            >
+              <el-option
+                v-for="kb in knowledgeBases"
+                :key="kb.id"
+                :label="kb.title"
+                :value="kb.id"
+              />
+            </el-select>
+          </div>
+          <div class="control-group">
+            <label>AI提供商</label>
+            <el-select
+              v-model="selectedProvider"
+              placeholder="选择AI提供商"
+              class="control-select"
+              @change="onProviderChange"
+            >
+              <el-option
+                v-for="provider in configuredProviders"
+                :key="provider.key"
+                :label="provider.name"
+                :value="provider.key"
+              >
+                <span>
+                  {{ provider.name }}
+                  <el-tag size="small" type="success" style="margin-left: 8px;">
+                    {{ provider.models.length }}个模型
+                  </el-tag>
+                </span>
+              </el-option>
+            </el-select>
+          </div>
+          <div class="control-group">
+            <label>模型</label>
+            <el-select
+              v-model="selectedModel"
+              placeholder="选择具体模型"
+              class="control-select"
+              @change="onModelChange"
+              :disabled="!selectedProvider"
+            >
+              <el-option
+                v-for="model in availableModels"
+                :key="model.key"
+              :label="model.name"
+              :value="model.key"
+            >
+              <span>
+                {{ model.name }}
+                <el-tag size="small" type="info" style="margin-left: 8px;">
+                  {{ model.version }}
+                </el-tag>
+              </span>
+            </el-option>
+          </el-select>
+        </div>
+        <div class="header-actions">
+          <el-button @click="goToConfig" type="warning" plain>
+            <el-icon><Setting /></el-icon>
+            AI配置
+          </el-button>
+          <el-button @click="showSessionList = true" type="primary" plain>
+            <el-icon><ChatDotRound /></el-icon>
+            会话列表
+          </el-button>
+          <el-button @click="createNewSession" type="success">
+            <el-icon><Plus /></el-icon>
+            新建对话
+          </el-button>
+          <el-button @click="goBack">
+            <el-icon><ArrowLeft /></el-icon>
+            返回
+          </el-button>
+        </div>
+      </div>
+    </el-header>
+
+    <!-- 聊天区域 -->
+    <el-main class="chat-main">
+      <div class="chat-messages" ref="messagesContainer">
+        <div
+          v-for="message in messages"
+          :key="message.id"
+          :class="['message', message.type]"
+        >
+          <div class="message-avatar">
+            <el-icon v-if="message.type === 'user'"><User /></el-icon>
+            <el-icon v-else><Robot /></el-icon>
+          </div>
+          <div class="message-content">
+            <div class="message-text">{{ message.content }}</div>
+            <div class="message-time">{{ formatTime(message.timestamp) }}</div>
+            <div v-if="message.sources" class="message-sources">
+              <el-tag
+                v-for="source in message.sources"
+                :key="source"
+                size="small"
+                type="info"
+              >
+                {{ source }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-main>
+
+    <!-- 输入区域 -->
+    <el-footer class="chat-footer">
+      <div class="input-container">
+        <el-input
+          v-model="inputMessage"
+          placeholder="请输入您的问题..."
+          @keyup.enter="sendMessage"
+          :disabled="!selectedKnowledgeBase"
+          size="large"
+        >
+          <template #append>
+            <el-button
+              @click="sendMessage"
+              type="primary"
+              :disabled="!inputMessage || !selectedKnowledgeBase"
+              :loading="loading"
+            >
+              发送
+            </el-button>
+          </template>
+        </el-input>
+      </div>
+    </el-footer>
+
+    <!-- 会话列表对话框 -->
+    <el-dialog
+      v-model="showSessionList"
+      title="会话列表"
+      width="800px"
+      :before-close="handleSessionDialogClose"
+    >
+      <div class="session-list">
+        <div class="session-item" 
+             v-for="session in sessions" 
+             :key="session.id"
+             :class="{ active: currentSessionId === session.id }"
+             @click="loadSession(session.id)">
+          <div class="session-info">
+            <div class="session-title">{{ session.title }}</div>
+            <div class="session-meta">
+              <span class="message-count">{{ session.message_count }} 条消息</span>
+              <span class="last-activity">{{ formatSessionTime(session.last_activity) }}</span>
+            </div>
+            <div v-if="session.last_message" class="last-message">
+              {{ session.last_message.question }}
+            </div>
+          </div>
+          <div class="session-actions">
+            <el-button 
+              @click.stop="deleteSession(session.id)" 
+              type="danger" 
+              size="small" 
+              text
+            >
+              删除
+            </el-button>
+          </div>
+        </div>
+        <div v-if="sessions.length === 0" class="empty-sessions">
+          <el-empty description="暂无会话" />
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showSessionList = false">关闭</el-button>
+        <el-button @click="createNewSession" type="primary">新建对话</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import api from '@/utils/api'
+
+const router = useRouter()
+
+interface Message {
+  id: number
+  type: 'user' | 'ai'
+  content: string
+  timestamp: Date
+  sources?: string[]
+}
+
+interface Session {
+  id: string
+  title: string
+  message_count: number
+  last_activity: string
+  last_message?: {
+    question: string
+    created_at: string
+  }
+}
+
+const messages = ref<Message[]>([])
+const inputMessage = ref('')
+const selectedKnowledgeBase = ref('')
+const knowledgeBases = ref([])
+const loading = ref(false)
+const messagesContainer = ref()
+
+// 会话管理
+const sessions = ref<Session[]>([])
+const currentSessionId = ref<string | null>(null)
+const showSessionList = ref(false)
+
+// AI模型管理
+const selectedProvider = ref('')
+const selectedModel = ref('')
+const configuredProviders = ref([])
+const availableModels = ref([])
+
+onMounted(() => {
+  loadKnowledgeBases()
+  loadSessions()
+  loadAvailableModels()
+})
+
+const loadKnowledgeBases = async () => {
+  try {
+    const response = await api.get('/knowledge/')
+    knowledgeBases.value = response.data
+    if (knowledgeBases.value.length > 0) {
+      selectedKnowledgeBase.value = knowledgeBases.value[0].id
+    }
+  } catch (error) {
+    ElMessage.error('加载知识库失败')
+  }
+}
+
+// 加载已配置的提供商和模型
+const loadAvailableModels = async () => {
+  try {
+    const response = await api.get('/chat/configured-providers/')
+    if (response.data && response.data.length > 0) {
+      configuredProviders.value = response.data.map((item: any) => ({
+        key: item.provider.key,
+        name: item.provider.name,
+        models: item.models
+      }))
+      
+      // 选择第一个提供商
+      if (configuredProviders.value.length > 0) {
+        selectedProvider.value = configuredProviders.value[0].key
+        onProviderChange(selectedProvider.value)
+      }
+    }
+  } catch (error) {
+    console.warn('加载AI模型配置失败')
+    ElMessage.warning('AI模型配置加载失败，请先配置API Key')
+  }
+}
+
+// 提供商变化时加载对应的模型
+const onProviderChange = async (providerKey: string) => {
+  if (!providerKey) {
+    availableModels.value = []
+    selectedModel.value = ''
+    return
+  }
+  
+  try {
+    const response = await api.get(`/chat/providers/${providerKey}/models/`)
+    availableModels.value = response.data
+    
+    // 选择第一个模型
+    if (availableModels.value.length > 0) {
+      selectedModel.value = availableModels.value[0].key
+    }
+  } catch (error) {
+    console.warn('加载模型列表失败')
+    ElMessage.error('加载模型列表失败')
+  }
+}
+
+// 加载会话列表
+const loadSessions = async () => {
+  try {
+    const response = await api.get('/chat/sessions/')
+    sessions.value = response.data
+  } catch (error) {
+    ElMessage.error('加载会话列表失败')
+  }
+}
+
+// 加载特定会话的消息
+const loadSession = async (sessionId: string) => {
+  try {
+    const response = await api.get(`/chat/sessions/${sessionId}/`)
+    const sessionData = response.data
+    
+    // 转换消息格式
+    messages.value = sessionData.messages.map((msg: any) => ({
+      id: msg.id,
+      type: msg.message_type === 'user' ? 'user' : 'ai',
+      content: msg.message_type === 'user' ? msg.question : msg.answer,
+      timestamp: new Date(msg.created_at),
+      sources: msg.knowledge_sources
+    }))
+    
+    currentSessionId.value = sessionId
+    showSessionList.value = false
+    
+    // 滚动到底部
+    await nextTick()
+    scrollToBottom()
+  } catch (error) {
+    ElMessage.error('加载会话失败')
+  }
+}
+
+// 创建新会话
+const createNewSession = async () => {
+  if (!selectedKnowledgeBase.value) {
+    ElMessage.warning('请先选择知识库')
+    return
+  }
+  
+  try {
+    const response = await api.post('/chat/sessions/create/', {
+      knowledge_base_id: selectedKnowledgeBase.value,
+      title: '新对话'
+    })
+    
+    const newSession = response.data
+    sessions.value.unshift(newSession)
+    currentSessionId.value = newSession.id
+    messages.value = []
+    showSessionList.value = false
+    
+    ElMessage.success('新对话已创建')
+  } catch (error) {
+    ElMessage.error('创建会话失败')
+  }
+}
+
+// 删除会话
+const deleteSession = async (sessionId: string) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个会话吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    await api.delete(`/chat/sessions/${sessionId}/delete/`)
+    
+    // 从列表中移除
+    sessions.value = sessions.value.filter(s => s.id !== sessionId)
+    
+    // 如果删除的是当前会话，清空消息
+    if (currentSessionId.value === sessionId) {
+      currentSessionId.value = null
+      messages.value = []
+    }
+    
+    ElMessage.success('会话已删除')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除会话失败')
+    }
+  }
+}
+
+// 知识库变更处理
+const onKnowledgeBaseChange = () => {
+  // 切换知识库时清空当前会话
+  currentSessionId.value = null
+  messages.value = []
+}
+
+// AI模型变更处理
+const onModelChange = (model: string) => {
+  console.log('选择的模型:', model)
+  const modelInfo = availableModels.value.find(m => m.key === model)
+  if (modelInfo) {
+    ElMessage.success(`已切换到模型: ${modelInfo.name} (${modelInfo.version})`)
+  }
+}
+
+const sendMessage = async () => {
+  if (!inputMessage.value || !selectedKnowledgeBase.value) return
+
+  const question = inputMessage.value
+  inputMessage.value = ''
+
+  // 添加用户消息
+  messages.value.push({
+    id: Date.now(),
+    type: 'user',
+    content: question,
+    timestamp: new Date()
+  })
+
+  loading.value = true
+
+  try {
+    const requestData: any = {
+      question,
+      knowledge_base_id: selectedKnowledgeBase.value,
+      model: selectedModel.value
+    }
+    
+    // 如果有当前会话，添加到请求中
+    if (currentSessionId.value) {
+      requestData.session_id = currentSessionId.value
+    }
+
+    const response = await api.post('/chat/ask/', requestData)
+
+    // 添加AI回复
+    messages.value.push({
+      id: Date.now() + 1,
+      type: 'ai',
+      content: response.data.answer,
+      sources: response.data.sources,
+      timestamp: new Date()
+    })
+
+    // 如果返回了新的会话ID，更新当前会话
+    if (response.data.session_id && !currentSessionId.value) {
+      currentSessionId.value = response.data.session_id
+      // 刷新会话列表
+      loadSessions()
+    }
+
+    // 滚动到底部
+    await nextTick()
+    scrollToBottom()
+  } catch (error) {
+    ElMessage.error('发送失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const scrollToBottom = () => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
+}
+
+const formatTime = (timestamp: Date) => {
+  return timestamp.toLocaleTimeString()
+}
+
+const formatSessionTime = (timestamp: string) => {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  if (diff < 60000) { // 1分钟内
+    return '刚刚'
+  } else if (diff < 3600000) { // 1小时内
+    return `${Math.floor(diff / 60000)}分钟前`
+  } else if (diff < 86400000) { // 1天内
+    return `${Math.floor(diff / 3600000)}小时前`
+  } else {
+    return date.toLocaleDateString()
+  }
+}
+
+const handleSessionDialogClose = () => {
+  showSessionList.value = false
+}
+
+const goToConfig = () => {
+  router.push('/ai-models')
+}
+
+const goBack = () => {
+  router.push('/')
+}
+</script>
+
+<style scoped>
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.chat-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0;
+  height: 80px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  padding: 0 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-title h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.header-title p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.control-group label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.control-select {
+  min-width: 160px;
+}
+  padding: 0 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-content h2 {
+  color: #2c3e50;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.chat-main {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+
+.chat-messages {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.message.user {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #409EFF;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 12px;
+  flex-shrink: 0;
+}
+
+.message.user .message-avatar {
+  background: #67C23A;
+}
+
+.message-content {
+  max-width: 70%;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message.user .message-content {
+  background: #409EFF;
+  color: white;
+}
+
+.message-text {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.message.user .message-time {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message-sources {
+  margin-top: 8px;
+}
+
+.chat-footer {
+  background: white;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.input-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* 会话列表样式 */
+.session-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.session-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.session-item:hover {
+  border-color: #409eff;
+  background-color: #f0f9ff;
+}
+
+.session-item.active {
+  border-color: #409eff;
+  background-color: #e6f7ff;
+}
+
+.session-info {
+  flex: 1;
+}
+
+.session-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.session-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 4px;
+}
+
+.last-message {
+  font-size: 14px;
+  color: #606266;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400px;
+}
+
+.session-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty-sessions {
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* AI模型选择器样式 */
+.model-unavailable {
+  color: #c0c4cc;
+}
+</style>

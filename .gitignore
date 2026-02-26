@@ -1,0 +1,21 @@
+# Python virtual env
+backend/.venv/
+venv/
+env/
+
+# Local config
+backend/.env
+backend/.env.*
+
+# Node modules
+frontend/node_modules/
+
+# Logs
+logs/
+*.log
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+

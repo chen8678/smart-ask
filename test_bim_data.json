@@ -1,0 +1,175 @@
+{
+  "bim_meta": {
+    "source_file": "test_bim_tower_1.json",
+    "source_format": "json",
+    "project": "1#塔楼结构 BIM",
+    "version": "1.0"
+  },
+  "elements": [
+    {
+      "type": "IfcBuildingElementProxy",
+      "name": "塔吊 TC-01",
+      "description": "塔式起重机，最大起重量 8t，臂长 60m",
+      "id": "TC-01",
+      "properties": {
+        "最小安全回转半径": "2.5m",
+        "最大回转半径": "60m",
+        "安装高度": "45m",
+        "基础标高": "±0.00"
+      }
+    },
+    {
+      "type": "IfcBuildingElementProxy",
+      "name": "塔吊 TC-02",
+      "description": "塔式起重机，最大起重量 6t，臂长 50m",
+      "id": "TC-02",
+      "properties": {
+        "最小安全回转半径": "2.2m",
+        "最大回转半径": "50m",
+        "安装高度": "38m"
+      }
+    },
+    {
+      "type": "IfcColumn",
+      "name": "KZ-1-1",
+      "description": "框架柱 1 轴/A 轴",
+      "section": "800×800",
+      "material": "C40 混凝土",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcColumn",
+      "name": "KZ-1-2",
+      "description": "框架柱 1 轴/B 轴",
+      "section": "800×800",
+      "material": "C40 混凝土",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcColumn",
+      "name": "KZ-2-1",
+      "description": "框架柱 2 轴/A 轴",
+      "section": "800×800",
+      "material": "C40 混凝土",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcBeam",
+      "name": "KL-1(1)",
+      "description": "1 轴框架梁",
+      "section": "300×700",
+      "span": "8.4m",
+      "material": "C30 混凝土",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcBeam",
+      "name": "KL-2(1)",
+      "description": "2 轴框架梁",
+      "section": "300×700",
+      "span": "8.4m",
+      "material": "C30 混凝土",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcBeam",
+      "name": "L-1",
+      "description": "次梁 A-B/1",
+      "section": "200×500",
+      "span": "6.0m",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcWall",
+      "name": "WQ-1",
+      "description": "外墙 1 轴",
+      "thickness": "200mm",
+      "material": "混凝土剪力墙",
+      "height": "3.0m",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcWall",
+      "name": "WQ-2",
+      "description": "外墙 2 轴",
+      "thickness": "200mm",
+      "material": "混凝土剪力墙",
+      "height": "3.0m",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcSlab",
+      "name": "B-1F",
+      "description": "一层楼板",
+      "thickness": "120mm",
+      "material": "C30 混凝土",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcSlab",
+      "name": "B-2F",
+      "description": "二层楼板",
+      "thickness": "120mm",
+      "material": "C30 混凝土",
+      "floor": "2F"
+    },
+    {
+      "type": "IfcDoor",
+      "name": "M-1021",
+      "description": "防火门 1F/2 轴",
+      "width": "1200mm",
+      "height": "2100mm",
+      "fire_rating": "甲级",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcDoor",
+      "name": "M-1022",
+      "description": "防火门 1F/2 轴 B 侧",
+      "width": "900mm",
+      "height": "2100mm",
+      "fire_rating": "乙级",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcWindow",
+      "name": "C-1011",
+      "description": "外窗 1F/1 轴",
+      "width": "1500mm",
+      "height": "1200mm",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcWindow",
+      "name": "C-1012",
+      "description": "外窗 1F/1 轴 2",
+      "width": "1500mm",
+      "height": "1200mm",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcStair",
+      "name": "ST-1",
+      "description": "楼梯 1#",
+      "width": "1200mm",
+      "floor": "1F-2F"
+    },
+    {
+      "type": "IfcRailing",
+      "name": "防护栏杆-1F",
+      "description": "临边防护栏杆，高度 1.2m",
+      "height": "1.2m",
+      "standard": "JGJ 80",
+      "floor": "1F"
+    },
+    {
+      "type": "IfcRailing",
+      "name": "防护栏杆-2F",
+      "description": "临边防护栏杆，高度 1.2m",
+      "height": "1.2m",
+      "standard": "JGJ 80",
+      "floor": "2F"
+    }
+  ],
+  "element_count": 19
+}

@@ -1,0 +1,23 @@
+========================================
+  运行说明（避免乱码）
+========================================
+
+setup.bat 和 start.bat 已改为【英文提示】，
+在 Windows 命令行下不会再有乱码。
+
+步骤不变：
+  1. 双击 setup.bat  → 按提示输入（见下方对照）
+  2. 双击 start.bat  → 启动后访问 http://localhost:3000
+
+英文提示对照：
+  PostgreSQL postgres password     = PostgreSQL 的 postgres 用户密码
+  Database name [ai_qa_system]     = 数据库名，直接回车用默认
+  DeepSeek API Key (optional)      = DeepSeek API 密钥，可留空
+  Overwrite? (y/N)                 = 是否覆盖已有配置，选 y 或 N
+  Database created? (y/N)          = 数据库是否已创建，选 y 或 N
+
+详细中文说明请查看：
+  使用指南-一键配置.md
+  README-使用说明.md
+
+========================================

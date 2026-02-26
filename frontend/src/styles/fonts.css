@@ -1,0 +1,51 @@
+/*
+ * SF Pro 字体引入
+ * 说明：优先使用系统安装的 SF Pro 字体，如果不可用则使用系统默认字体。
+ * 这样可以在 macOS/iOS 上使用 SF Pro，在其他系统上优雅降级。
+ * 注意：只使用 local() 引用系统字体，不加载外部字体文件，避免 404 错误
+ */
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: local('SF Pro Display'), 
+       local('SFProDisplay-Regular'),
+       local('-apple-system'),
+       local('BlinkMacSystemFont');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: local('SF Pro Display Medium'), 
+       local('SFProDisplay-Medium'),
+       local('-apple-system'),
+       local('BlinkMacSystemFont');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: local('SF Pro Display Bold'), 
+       local('SFProDisplay-Bold'),
+       local('-apple-system'),
+       local('BlinkMacSystemFont');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: local('SF Pro Text'), 
+       local('SFProText-Regular'),
+       local('-apple-system'),
+       local('BlinkMacSystemFont');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
