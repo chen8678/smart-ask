@@ -17,6 +17,12 @@ const router = createRouter({
       meta: { requiresAuth: false }
     },
     {
+      path: '/bim',
+      name: 'bim-home',
+      component: () => import('@/views/AppSimple.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/register',
       name: 'register',
       component: () => import('@/views/Register.vue')
@@ -94,6 +100,19 @@ const router = createRouter({
       name: 'admin',
       component: () => import('@/views/Admin.vue'),
       meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    // 四六级学习系统
+    {
+      path: '/cet',
+      name: 'cet-dashboard',
+      component: () => import('@/views/CETDashboard.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/cet/practice',
+      name: 'cet-practice',
+      component: () => import('@/views/CETPractice.vue'),
+      meta: { requiresAuth: true }
     },
   ]
 })
