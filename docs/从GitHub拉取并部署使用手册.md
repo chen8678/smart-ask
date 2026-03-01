@@ -19,7 +19,47 @@
 
 ---
 
-## 二、从 GitHub 克隆项目
+## 二、仓库可见性与同事拉取所需条件
+
+### 2.1 仓库是「公开」还是「私有」？
+
+- **公开仓库（Public）**  
+  任何人（包括同事）都可以**无需登录**直接克隆、拉取：  
+  `git clone https://github.com/chen8678/smart-ask.git`  
+  不需要你额外做任何设置，同事只要本机装了 Git 即可拉取。
+
+- **私有仓库（Private）**  
+  只有你本人和被你**添加为协作者（Collaborator）** 的 GitHub 账号可以拉取。同事需要先有自己的 GitHub 账号，再由你把他加入仓库。
+
+### 2.2 如何查看/修改仓库可见性？
+
+1. 打开 **https://github.com/chen8678/smart-ask**
+2. 点击 **Settings**（仓库设置）
+3. 在 **General** 页最下方 **Danger Zone** 上方，找到 **Visibility**：  
+   - 显示 **Public**：当前为公开，任何人可拉取。  
+   - 显示 **Private**：当前为私有，需添加协作者后同事才能拉取。
+
+### 2.3 如何让同事能拉取私有仓库？
+
+1. 在仓库页点击 **Settings** → 左侧 **Collaborators**（或 **Collaborators and teams**）
+2. 点击 **Add people**，输入同事的 **GitHub 用户名或邮箱**
+3. 选择权限（**Read** 即可拉取/克隆），邀请后同事在 GitHub 或邮箱接受邀请即可
+
+同事接受邀请后，用**自己的 GitHub 账号**克隆时使用：
+
+- HTTPS：`git clone https://github.com/chen8678/smart-ask.git`（会提示登录 GitHub）
+- SSH：同事本机配置好自己的 SSH 公钥并添加到他的 GitHub 账号后，`git clone git@github.com:chen8678/smart-ask.git`
+
+### 2.4 总结
+
+| 仓库类型 | 同事是否需要 GitHub 账号 | 你是否需要设置 |
+|----------|--------------------------|----------------|
+| **Public（公开）** | 不需要，可直接克隆 | 不需要 |
+| **Private（私有）** | 需要，且需你把他加为协作者 | 在 Settings → Collaborators 中添加 |
+
+---
+
+## 三、从 GitHub 克隆项目
 
 ### 方式一：SSH（推荐，需已配置 SSH 公钥）
 
@@ -39,7 +79,7 @@ cd smart-ask
 
 ---
 
-## 三、数据库准备
+## 四、数据库准备
 
 1. **启动 PostgreSQL 服务**（若未自动启动）  
    - macOS：`brew services start postgresql@14` 或根据你的安装方式启动。  
@@ -58,9 +98,9 @@ cd smart-ask
 
 ---
 
-## 四、后端配置与启动
+## 五、后端配置与启动
 
-### 4.1 配置环境变量
+### 5.1 配置环境变量
 
 在项目根目录下，为**后端**创建 `.env` 文件：
 
@@ -82,7 +122,7 @@ ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
 - **DATABASE_URL**：数据库连接串，用户名/密码/端口/库名按本机实际情况修改。  
 - **DEEPSEEK_API_KEY**：在 [DeepSeek 开放平台](https://platform.deepseek.com/) 获取，用于 AI 问答；不填则无法使用「来自AI知识」的兜底回答，但知识库 RAG 仍可工作（若模型调用不依赖该 Key）。
 
-### 4.2 安装 Python 依赖并执行迁移
+### 5.2 安装 Python 依赖并执行迁移
 
 在项目根目录下执行（建议在虚拟环境中）：
 
@@ -97,7 +137,7 @@ python manage.py migrate
 
 迁移成功后会创建所需表结构。
 
-### 4.3 启动后端服务
+### 5.3 启动后端服务
 
 ```bash
 # 仍在 backend 目录，虚拟环境已激活
@@ -108,7 +148,7 @@ python manage.py runserver 0.0.0.0:8000
 
 ---
 
-## 五、前端安装与启动
+## 六、前端安装与启动
 
 **新开一个终端**，在项目根目录执行：
 
@@ -122,7 +162,7 @@ npm run dev
 
 ---
 
-## 六、访问与首次使用
+## 七、访问与首次使用
 
 1. **打开浏览器**  
    访问：**http://localhost:3000**
@@ -142,18 +182,18 @@ npm run dev
 
 ---
 
-## 七、一键脚本（可选）
+## 八、一键脚本（可选）
 
 项目根目录下若存在：
 
 - **macOS/Linux**：`./setup.sh` 可引导配置数据库与 `.env`；`./start.sh` 可一次性启动后端与前端（需根据脚本实际内容使用）。
 - **Windows**：可双击 `setup.bat` / `start.bat`（若存在）完成配置与启动。
 
-具体以仓库内脚本为准；若不存在，按上述第四、五节手动执行即可。
+具体以仓库内脚本为准；若不存在，按上述第五、六节手动执行即可。
 
 ---
 
-## 八、常见问题
+## 九、常见问题
 
 | 现象 | 处理建议 |
 |------|----------|
@@ -165,7 +205,7 @@ npm run dev
 
 ---
 
-## 九、后续更新代码
+## 十、后续更新代码
 
 在项目根目录（smart-ask）下执行：
 
